@@ -1,0 +1,45 @@
+sequel_mailer
+=============
+
+My attempt at a clone of ar_mailer (http://seattlerb.rubyforge.org/ar_mailer/) for Merb 0.9.1+ and the Sequel ORM.
+
+Status
+=============
+The plugin can be used in your merb app, but there's nothing to send the mail yet.
+
+
+Using
+=============
++ Create the migration for your model (Assumes model will be named Email):
+
+class EmailMigration < Sequel::Migration
+  def up
+    create_table "emails" do
+      primary_key :id
+      varchar :from_address
+      varchar :to_address
+      varchar :last_send_attempt, :default => 0
+      text    :mail
+      datetime :created_on
+    end
+  end
+
+  def down
+    execute "DROP TABLE emails"
+  end
+end
+
+
++ Set the delivery_method and class to be used:
+
+Merb::Mailer.delivery_method = :sequel
+Merb::Mailer.config = {:sequel_mailer_class => Email}
+
++ Enjoy
+
+
+TODO
+=============
++ Write specs for the mailer
++ Write the sequel_sendmail daemon
++ Write a generator for the migration and setting the config
