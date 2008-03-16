@@ -1,0 +1,5 @@
+#!/usr/bin/env ruby
+
+require 'sequel_mailer/sequel_sendmail'
+Sequel::Sendmail.run
+
