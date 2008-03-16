@@ -401,7 +401,7 @@ end
     return if @max_age == 0
     timeout = Time.now - @max_age
     conditions = ['last_send_attempt > 0 and created_on < ?', timeout]
-    mail = @email_class.destroy_all conditions
+    mail = @email_class.find(conditions).delete rescue []
 
     log "expired #{mail.length} emails from the queue"
   end
@@ -410,12 +410,14 @@ end
   # Delivers +emails+ to Merb::Mailer's SMTP server and destroys them.
 
   def deliver(emails)
+    raise "You must setup Merb::Mailer.config" if Merb::Mailer.config.nil? 
+    
     user = Merb::Mailer.config[:user] || Merb::Mailer.config[:user_name]
     Net::SMTP.start Merb::Mailer.config[:host], 
                     Merb::Mailer.config[:port],
                     Merb::Mailer.config[:domain], 
                     user,
-                    Merb::Mailer.config[:password],
+                    Merb::Mailer.config[:pass],
                     Merb::Mailer.config[:auth],
                     Merb::Mailer.config[:tls] do |smtp|
       @failed_auth_count = 0
@@ -470,11 +472,13 @@ end
   # last 300 seconds.
 
   def find_emails
-    options = { :conditions => ['last_send_attempt < ?', Time.now.to_i - 300] }
+    
     options[:limit] = batch_size unless batch_size.nil?
-    mail = @email_class.find :all, options
+    query = @email_class.filter("last_send_attempt < #{Time.now.to_i - 300}")
+    query.limit(batch_size) unless batch_size.nil?
+    mail = query.all
 
-    log "found #{mail.length} emails to send"
+    log "found #{mail.size} emails to send"
     mail
   end
 
@@ -491,7 +495,7 @@ end
 
   def log(message)
     $stderr.puts message if @verbose
-    ActionMailer::Base.logger.info "ar_sendmail: #{message}"
+    Merb.logger.info "ar_sendmail: #{message}"
   end
 
   ##
