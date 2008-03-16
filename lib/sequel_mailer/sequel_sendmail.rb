@@ -321,11 +321,10 @@ end
 
     require "app" / "models" / "#{options[:TableName].underscore}.rb"
     
-    puts "DOING THIS THANG"
+    # This connects us to the db, etc
     Merb.environment = options[:MerbEnv]
     Merb::Config.setup
     Merb.root = Merb::Config[:merb_root]
-    puts "IN ENV = #{Merb.environment}"
     Merb::BootLoader.run
     
     if options.include? :Migrate then
